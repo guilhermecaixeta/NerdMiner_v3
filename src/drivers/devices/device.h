@@ -33,6 +33,8 @@
 #include "lilygoV1TDisplay.h"
 #elif defined(ESP32_CAM)
 #include "esp32CAM.h"
+#elif defined(ESP32_S3_DEVKITC_ST7735S)
+#include "esp32S3DevKitCSt7735s.h"
 #elif defined(ESP32RGB)
 #include "esp32RGB.h"
 #elif defined(M5_STAMP_S3)

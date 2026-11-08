@@ -154,6 +154,8 @@ coin_data getCoinData(unsigned long mElapsed);
 pool_data getPoolData(void);
 
 clock_data_t getClockData_t(unsigned long mElapsed);
+String getDate();
+String getTime();
 String getPoolAPIUrl(void);
 
 #endif //MONITOR_API_H

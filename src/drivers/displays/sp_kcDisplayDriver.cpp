@@ -11,17 +11,32 @@
 #include "OpenFontRender.h"
 #include "rotation.h"
 
-#define WIDTH 128
+#define WIDTH 160
 #define HEIGHT 128
 
 OpenFontRender render;
 TFT_eSPI tft = TFT_eSPI();                  // Invoke library, pins defined in User_Setup.h
+
 TFT_eSprite background = TFT_eSprite(&tft); // Invoke library sprite
+static void pushScaledImage(const unsigned short *image, uint16_t sourceWidth, uint16_t sourceHeight)
+{
+  uint16_t row[WIDTH];
+  for (uint16_t y = 0; y < HEIGHT; ++y)
+  {
+    uint16_t sourceY = (uint32_t)y * sourceHeight / HEIGHT;
+    for (uint16_t x = 0; x < WIDTH; ++x)
+    {
+      uint16_t sourceX = (uint32_t)x * sourceWidth / WIDTH;
+      row[x] = pgm_read_word(&image[sourceY * sourceWidth + sourceX]);
+    }
+    background.pushImage(0, y, WIDTH, 1, row);
+  }
+}
 
 void sp_kcDisplay_Init(void)
 {
   tft.init();
-  tft.setRotation(PORTRAIT);
+  tft.setRotation(LANDSCAPE);
   tft.setSwapBytes(true);                 // Swap the colour byte order when rendering
   background.createSprite(WIDTH, HEIGHT); // Background Sprite
   background.setSwapBytes(true);
@@ -54,7 +69,7 @@ void sp_kcDisplay_MinerScreen(unsigned long mElapsed)
   mining_data data = getMiningData(mElapsed);
 
   // Print background screen
-  background.pushImage(0, 0, MinerWidth, MinerHeight, MinerScreen);
+  pushScaledImage(MinerScreen, MinerWidth, MinerHeight);
 
   Serial.printf(">>> Completed %s share(s), %s Khashes, avg. hashrate %s KH/s\n",
                 data.completedShares.c_str(), data.totalKHashes.c_str(), data.currentHashRate.c_str());
@@ -63,11 +78,11 @@ void sp_kcDisplay_MinerScreen(unsigned long mElapsed)
     render.setFontSize(32);
     render.setCursor(0, 0);
     render.setFontColor(TFT_BLACK);    
-    render.rdrawString(data.currentHashRate.c_str(), 114, 24, TFT_DARKGREY);
+    render.rdrawString(data.currentHashRate.c_str(), 142, 24, TFT_DARKGREY);
 
     //Valid Blocks
     render.setFontSize(22);
-    render.drawString(data.valids.c_str(), 15, 92, TFT_BLACK);
+    render.drawString(data.valids.c_str(), 19, 92, TFT_BLACK);
     
     //Mining Time
     char timeMining[15]; 
@@ -79,7 +94,7 @@ void sp_kcDisplay_MinerScreen(unsigned long mElapsed)
     sprintf(timeMining, "%01d  %02d:%02d:%02d", days, hours, mins, secs);
     render.setFontSize(10);
     render.setCursor(0, 10);        
-    render.rdrawString(String(timeMining).c_str(), 124, 0, TFT_BLACK);
+    render.rdrawString(String(timeMining).c_str(), 155, 0, TFT_BLACK);
 
     //Push prepared background to screen
     background.pushSprite(0,0);
@@ -91,7 +106,7 @@ void sp_kcDisplay_ClockScreen(unsigned long mElapsed)
     clock_data_t data = getClockData_t(mElapsed);
 
     // Print background screen
-    background.pushImage(0, 0, minerClockWidth, minerClockHeight, minerClockScreen);
+    pushScaledImage(minerClockScreen, minerClockWidth, minerClockHeight);
 
     // Serial.printf(">>> Completed %s share(s), %s Khashes, avg. hashrate %s KH/s\n",
     //             data.completedShares.c_str(), data.totalKHashes.c_str(), data.currentHashRate.c_str());
@@ -137,6 +152,25 @@ void sp_kcDisplay_ClockScreen(unsigned long mElapsed)
     background.pushSprite(0,0);      
 }
 
+void sp_kcDisplay_DateTimeHashScreen(unsigned long mElapsed)
+{
+  mining_data data = getMiningData(mElapsed);
+  background.fillSprite(TFT_NAVY);
+  background.setTextDatum(MC_DATUM);
+  background.setTextColor(TFT_CYAN, TFT_NAVY);
+  background.drawString("NERDMINER", WIDTH / 2, 14, 2);
+  background.drawFastHLine(12, 28, WIDTH - 24, TFT_DARKGREY);
+  background.setTextColor(TFT_WHITE, TFT_NAVY);
+  background.drawString(getDate(), WIDTH / 2, 48, 4);
+  background.setTextColor(TFT_YELLOW, TFT_NAVY);
+  background.drawString(getTime(), WIDTH / 2, 77, 4);
+  background.setTextColor(TFT_LIGHTGREY, TFT_NAVY);
+  background.drawString("HASHRATE", WIDTH / 2, 101, 2);
+  background.setTextColor(TFT_GREEN, TFT_NAVY);
+  background.drawString(data.currentHashRate + " KH/s", WIDTH / 2, 117, 2);
+  background.pushSprite(0, 0);
+}
+
 void sp_kcDisplay_GlobalHashScreen(unsigned long mElapsed)
 {
 
@@ -145,14 +179,14 @@ void sp_kcDisplay_GlobalHashScreen(unsigned long mElapsed)
 void sp_kcDisplay_LoadingScreen(void)
 {
   tft.fillScreen(TFT_BLACK);
-  tft.pushImage(0, 0, initWidth, initHeight, initScreen);
+  pushScaledImage(initScreen, initWidth, initHeight);
   tft.setTextColor(TFT_GOLD);
   tft.drawString(CURRENT_VERSION, 2, 100, FONT2); 
 }
 
 void sp_kcDisplay_SetupScreen(void)
 {
-  tft.pushImage(0, 0, setupModeWidth, setupModeHeight, setupModeScreen);
+  pushScaledImage(setupModeScreen, setupModeWidth, setupModeHeight);
 }
 
 void sp_kcDisplay_AnimateCurrentScreen(unsigned long frame)
@@ -163,7 +197,7 @@ void sp_kcDisplay_DoLedStuff(unsigned long frame)
 {
 }
 
-CyclicScreenFunction sp_kcDisplayCyclicScreens[] = {sp_kcDisplay_MinerScreen, sp_kcDisplay_ClockScreen};
+CyclicScreenFunction sp_kcDisplayCyclicScreens[] = {sp_kcDisplay_MinerScreen, sp_kcDisplay_ClockScreen, sp_kcDisplay_DateTimeHashScreen};
 
 DisplayDriver sp_kcDisplayDriver = {
     sp_kcDisplay_Init,

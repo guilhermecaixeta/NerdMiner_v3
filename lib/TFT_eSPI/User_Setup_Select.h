@@ -138,6 +138,9 @@
 #ifdef SPOTPEAR
 #include <User_Setups/Setup_Spotpear_ST7735.h>
 #endif
+#ifdef ESP32_S3_DEVKITC_ST7735S
+#include <User_Setups/Setup_ESP32_S3_DevKitC_ST7735S.h>
+#endif
 
 #ifdef NERDMINER_S3_AMOLED
 #include <User_Setups/Setup206_LilyGo_T_Display_S3.h> //Just a stub. No driver implementation for S3 AMOLED in TFT_eSPI

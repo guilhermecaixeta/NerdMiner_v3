@@ -155,19 +155,51 @@ void sp_kcDisplay_ClockScreen(unsigned long mElapsed)
 void sp_kcDisplay_DateTimeHashScreen(unsigned long mElapsed)
 {
   mining_data data = getMiningData(mElapsed);
-  background.fillSprite(TFT_NAVY);
+  const uint16_t navy = 0x0861;
+  const uint16_t blue = 0x249F;
+  const uint16_t yellow = 0xFFE0;
+  const uint16_t ink = 0x10A3;
+
+  background.fillSprite(navy);
+  background.setTextDatum(TL_DATUM);
+  background.setTextColor(TFT_YELLOW, navy);
+  background.drawString("NERD", 7, 3, 2);
+  background.drawString("MINER", 7, 15, 2);
+  background.setTextColor(TFT_LIGHTGREY, navy);
+  background.setTextDatum(TR_DATUM);
+  background.drawString(getDate(), WIDTH - 7, 3, 1);
+  background.setTextColor(TFT_WHITE, navy);
+  background.drawString(getTime(), WIDTH - 7, 13, 2);
+
+  background.fillRoundRect(5, 31, 98, 57, 6, yellow);
+  background.fillTriangle(92, 31, 111, 31, 103, 88, yellow);
+  background.fillRoundRect(106, 29, 49, 62, 6, ink);
+
+  background.setTextColor(ink, yellow);
   background.setTextDatum(MC_DATUM);
-  background.setTextColor(TFT_CYAN, TFT_NAVY);
-  background.drawString("NERDMINER", WIDTH / 2, 14, 2);
-  background.drawFastHLine(12, 28, WIDTH - 24, TFT_DARKGREY);
-  background.setTextColor(TFT_WHITE, TFT_NAVY);
-  background.drawString(getDate(), WIDTH / 2, 48, 4);
-  background.setTextColor(TFT_YELLOW, TFT_NAVY);
-  background.drawString(getTime(), WIDTH / 2, 77, 4);
-  background.setTextColor(TFT_LIGHTGREY, TFT_NAVY);
-  background.drawString("HASHRATE", WIDTH / 2, 101, 2);
-  background.setTextColor(TFT_GREEN, TFT_NAVY);
-  background.drawString(data.currentHashRate + " KH/s", WIDTH / 2, 117, 2);
+  background.drawString(data.currentHashRate, 53, 55, 4);
+  background.setTextColor(0x3186, yellow);
+  background.drawString("KH/s", 86, 78, 1);
+
+  background.setTextColor(TFT_LIGHTGREY, ink);
+  background.drawString("VALID", 130, 43, 1);
+  background.drawString("BLOCKS", 130, 51, 1);
+  background.setTextColor(TFT_WHITE, ink);
+  background.drawString(data.valids, 130, 68, 4);
+
+  background.setTextDatum(TL_DATUM);
+  background.setTextColor(TFT_LIGHTGREY, navy);
+  background.drawString("UPTIME", 8, 96, 1);
+  unsigned long uptimeSeconds = millis() / 1000;
+  char uptimeText[18];
+  snprintf(uptimeText, sizeof(uptimeText), "%lud %02lu:%02lu:%02lu", uptimeSeconds / 86400, (uptimeSeconds / 3600) % 24, (uptimeSeconds / 60) % 60, uptimeSeconds % 60);
+  background.setTextColor(TFT_WHITE, navy);
+  background.drawString(uptimeText, 8, 108, 2);
+
+  background.fillRoundRect(103, 97, 52, 25, 4, blue);
+  background.setTextDatum(MC_DATUM);
+  background.setTextColor(TFT_WHITE, blue);
+  background.drawString(data.totalKHashes + " KH", 129, 110, 2);
   background.pushSprite(0, 0);
 }
 

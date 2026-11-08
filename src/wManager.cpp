@@ -148,7 +148,7 @@ void init_WifiManager()
 #endif
 
     // Change to true when testing to force configuration every time we run
-    bool forceConfig = false;
+    bool forceConfig = true;
 
 #if defined(PIN_BUTTON_2)
     // Check if button2 is pressed to enter configMode with actual configuration

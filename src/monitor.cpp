@@ -3,6 +3,7 @@
 #include "mbedtls/md.h"
 #include "HTTPClient.h"
 #include <NTPClient.h>
+#include <time.h>
 #include <WiFiUdp.h>
 #include <list>
 #include "mining.h"
@@ -39,6 +40,8 @@ String poolAPIUrl;
 
 
 void setup_monitor(void){
+    setenv("TZ", "WET0WEST,M3.5.0/1,M10.5.0/2", 1);
+    tzset();
     /******** TIME ZONE SETTING *****/
 
     timeClient.begin();
@@ -210,7 +213,7 @@ void getTime(unsigned long* currentHours, unsigned long* currentMinutes, unsigne
   if((mTriggerUpdate == 0) || (millis() - mTriggerUpdate > UPDATE_PERIOD_h * 60 * 60 * 1000)){ //60 sec. * 60 min * 1000ms
     if(WiFi.status() == WL_CONNECTED) {
         if(timeClient.update()) mTriggerUpdate = millis(); //NTP call to get current time
-        initialTime = timeClient.getEpochTime(); // Guarda la hora inicial (en segundos desde 1970)
+        initialTime = timeClient.getEpochTime() - (3600L * Settings.Timezone); // Guarda la hora inicial (en segundos desde 1970)
         Serial.print("TimeClient NTPupdateTime ");
     }
   }
@@ -218,27 +221,22 @@ void getTime(unsigned long* currentHours, unsigned long* currentMinutes, unsigne
   unsigned long elapsedTime = (millis() - mTriggerUpdate) / 1000; // Tiempo transcurrido en segundos
   unsigned long currentTime = initialTime + elapsedTime; // La hora actual
 
-  // convierte la hora actual en horas, minutos y segundos
-  *currentHours = currentTime % 86400 / 3600;
-  *currentMinutes = currentTime % 3600 / 60;
-  *currentSeconds = currentTime % 60;
+  time_t epoch = (time_t)currentTime;
+  struct tm localTime;
+  localtime_r(&epoch, &localTime);
+  *currentHours = localTime.tm_hour;
+  *currentMinutes = localTime.tm_min;
+  *currentSeconds = localTime.tm_sec;
 }
 
 String getDate(){
-  
-  unsigned long elapsedTime = (millis() - mTriggerUpdate) / 1000; // Tiempo transcurrido en segundos
-  unsigned long currentTime = initialTime + elapsedTime; // La hora actual
+  unsigned long currentTime = initialTime + (millis() - mTriggerUpdate) / 1000;
+  time_t epoch = (time_t)currentTime;
+  struct tm localTime;
+  localtime_r(&epoch, &localTime);
 
-  // Convierte la hora actual (epoch time) en una estructura tm
-  struct tm *tm = localtime((time_t *)&currentTime);
-
-  int year = tm->tm_year + 1900; // tm_year es el número de años desde 1900
-  int month = tm->tm_mon + 1;    // tm_mon es el mes del año desde 0 (enero) hasta 11 (diciembre)
-  int day = tm->tm_mday;         // tm_mday es el día del mes
-
-  char currentDate[20];
-  sprintf(currentDate, "%02d/%02d/%04d", tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
-
+  char currentDate[16];
+  snprintf(currentDate, sizeof(currentDate), "%02d/%02d/%04d", localTime.tm_mday, localTime.tm_mon + 1, localTime.tm_year + 1900);
   return String(currentDate);
 }
 
